@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Order } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
+import { OrderListSkeleton } from "../components/Skeleton";
 import { useI18n } from "../i18n";
 import { money } from "../lib/format";
 
@@ -19,7 +20,7 @@ export default function OrdersPage() {
     });
   }, []);
 
-  if (loading) return <p className="p-6 text-tg-hint">…</p>;
+  if (loading) return <OrderListSkeleton />;
 
   if (orders.length === 0) {
     return (

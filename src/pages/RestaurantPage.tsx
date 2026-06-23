@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Product, RestaurantDetail } from "../api/types";
+import { MenuSkeleton } from "../components/Skeleton";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 import { useCart } from "../store/cart";
@@ -18,7 +19,7 @@ export default function RestaurantPage() {
     if (id) api.restaurant(Number(id)).then(setData);
   }, [id]);
 
-  if (!data) return <p className="p-6 text-tg-hint">…</p>;
+  if (!data) return <MenuSkeleton />;
 
   const addToCart = (p: Product) => {
     cart.add(p);

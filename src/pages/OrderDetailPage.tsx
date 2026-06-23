@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Order } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
+import { OrderDetailSkeleton } from "../components/Skeleton";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 
@@ -22,7 +23,7 @@ export default function OrderDetailPage() {
     return () => clearInterval(iv);
   }, [id]);
 
-  if (!order) return <p className="p-6 text-tg-hint">…</p>;
+  if (!order) return <OrderDetailSkeleton />;
 
   const stepIdx = STEPS.indexOf(order.status as (typeof STEPS)[number]);
 

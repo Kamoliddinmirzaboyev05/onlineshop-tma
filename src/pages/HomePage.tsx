@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Restaurant } from "../api/types";
+import { StoreListSkeleton } from "../components/Skeleton";
 import { useI18n } from "../i18n";
 import { money } from "../lib/format";
 
@@ -35,7 +36,7 @@ export default function HomePage() {
       </div>
 
       {loading ? (
-        <p className="text-tg-hint py-8 text-center">…</p>
+        <StoreListSkeleton />
       ) : (
         <div className="space-y-3 mt-2">
           {items.map((r) => (
