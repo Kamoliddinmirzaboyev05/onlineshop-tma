@@ -91,6 +91,7 @@ export const useI18n = create<I18nState>((set) => ({
 }));
 
 // localized field helper
-export function loc<T extends Record<string, unknown>>(obj: T, base: string, lang: Lang): string {
-  return (obj[`${base}_${lang}`] as string) ?? (obj[`${base}_uz`] as string) ?? "";
+export function loc<T extends object>(obj: T, base: string, lang: Lang): string {
+  const rec = obj as Record<string, unknown>;
+  return (rec[`${base}_${lang}`] as string) ?? (rec[`${base}_uz`] as string) ?? "";
 }
