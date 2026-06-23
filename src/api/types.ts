@@ -15,6 +15,7 @@ export interface Category {
   id: number;
   name_uz: string;
   name_ru: string;
+  image_url?: string | null;
   sort_order: number;
   products: Product[];
 }

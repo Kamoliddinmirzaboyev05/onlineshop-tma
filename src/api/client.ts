@@ -38,6 +38,13 @@ export const api = {
     req<Restaurant[]>(`/restaurants${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   restaurant: (id: number) => req<RestaurantDetail>(`/restaurants/${id}`),
 
+  // bitta do'kon (single store) — ro'yxatdagi birinchi do'konning to'liq ma'lumoti
+  store: async (): Promise<RestaurantDetail | null> => {
+    const list = await req<Restaurant[]>("/restaurants");
+    if (!list.length) return null;
+    return req<RestaurantDetail>(`/restaurants/${list[0].id}`);
+  },
+
   // addresses
   addresses: () => req<Address[]>("/addresses"),
   createAddress: (data: Partial<Address>) =>

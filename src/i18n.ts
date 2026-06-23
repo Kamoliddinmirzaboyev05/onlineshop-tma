@@ -6,6 +6,11 @@ export type Lang = "uz" | "ru";
 const dict = {
   uz: {
     restaurants: "Restoranlar",
+    home: "Bosh sahifa",
+    categories: "Kategoriyalar",
+    no_categories: "Kategoriyalar hali yo'q",
+    empty_category: "Bu kategoriyada mahsulot yo'q",
+    products_n: "mahsulot",
     search: "Qidirish…",
     cart: "Savatcha",
     cart_empty: "Savatcha bo'sh",
@@ -42,6 +47,11 @@ const dict = {
   },
   ru: {
     restaurants: "Рестораны",
+    home: "Главная",
+    categories: "Категории",
+    no_categories: "Категорий пока нет",
+    empty_category: "В этой категории нет товаров",
+    products_n: "товаров",
     search: "Поиск…",
     cart: "Корзина",
     cart_empty: "Корзина пуста",
