@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import BottomNav from "./components/BottomNav";
 import CartPage from "./pages/CartPage";
+import CategoryPage from "./pages/CategoryPage";
 import CheckoutPage from "./pages/CheckoutPage";
 import HomePage from "./pages/HomePage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import OrdersPage from "./pages/OrdersPage";
 import ProfilePage from "./pages/ProfilePage";
 import RestaurantPage from "./pages/RestaurantPage";
+import SearchPage from "./pages/SearchPage";
 import { useAuth } from "./store/auth";
 
 export default function App() {
@@ -29,6 +31,8 @@ export default function App() {
     <div className="min-h-full pb-20">
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/category/:id" element={<CategoryPage />} />
+        <Route path="/search" element={<SearchPage />} />
         <Route path="/restaurant/:id" element={<RestaurantPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />

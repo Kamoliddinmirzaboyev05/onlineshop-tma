@@ -7,6 +7,7 @@ const dict = {
   uz: {
     restaurants: "Restoranlar",
     home: "Bosh sahifa",
+    search_tab: "Qidiruv",
     categories: "Kategoriyalar",
     no_categories: "Kategoriyalar hali yo'q",
     empty_category: "Bu kategoriyada mahsulot yo'q",
@@ -48,6 +49,7 @@ const dict = {
   ru: {
     restaurants: "Рестораны",
     home: "Главная",
+    search_tab: "Поиск",
     categories: "Категории",
     no_categories: "Категорий пока нет",
     empty_category: "В этой категории нет товаров",

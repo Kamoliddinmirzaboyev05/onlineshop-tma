@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { ChevronLeft, Plus } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ChevronLeft, Minus, Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
@@ -41,6 +41,12 @@ export default function CategoryPage() {
     cart.add(p);
     haptic("light");
   };
+  const dec = (p: Product) => {
+    const q = cart.lines[p.id]?.quantity ?? 0;
+    cart.setQty(p.id, q - 1);
+    haptic("light");
+  };
+  const qtyOf = (p: Product) => cart.lines[p.id]?.quantity ?? 0;
 
   return (
     <div className="min-h-full bg-tg-bg">
@@ -93,17 +99,49 @@ export default function CategoryPage() {
                   <h3 className="font-medium text-sm leading-tight line-clamp-2">
                     {loc(p, "name", lang)}
                   </h3>
-                  <div className="mt-auto pt-2 flex items-center justify-between">
+                  <div className="mt-auto pt-2 flex items-center justify-between gap-2">
                     <span className="font-semibold text-sm">
                       {money(p.price)} {t.sum}
                     </span>
-                    <motion.button
-                      whileTap={{ scale: 0.85 }}
-                      onClick={() => add(p)}
-                      className="h-8 w-8 rounded-full bg-brand text-white flex items-center justify-center shadow-sm"
-                    >
-                      <Plus size={18} />
-                    </motion.button>
+                    <AnimatePresence mode="wait" initial={false}>
+                      {qtyOf(p) === 0 ? (
+                        <motion.button
+                          key="add"
+                          initial={{ scale: 0.6, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.6, opacity: 0 }}
+                          whileTap={{ scale: 0.85 }}
+                          onClick={() => add(p)}
+                          className="h-8 w-8 shrink-0 rounded-full bg-brand text-white flex items-center justify-center shadow-sm"
+                        >
+                          <Plus size={18} />
+                        </motion.button>
+                      ) : (
+                        <motion.div
+                          key="step"
+                          initial={{ scale: 0.6, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          exit={{ scale: 0.6, opacity: 0 }}
+                          className="flex items-center gap-1 shrink-0 rounded-full bg-brand-light"
+                        >
+                          <button
+                            onClick={() => dec(p)}
+                            className="h-8 w-8 rounded-full text-brand flex items-center justify-center active:scale-90 transition"
+                          >
+                            <Minus size={16} />
+                          </button>
+                          <span className="min-w-[1.25rem] text-center text-sm font-bold text-brand">
+                            {qtyOf(p)}
+                          </span>
+                          <button
+                            onClick={() => add(p)}
+                            className="h-8 w-8 rounded-full bg-brand text-white flex items-center justify-center active:scale-90 transition shadow-sm"
+                          >
+                            <Plus size={16} />
+                          </button>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 </div>
               </motion.div>

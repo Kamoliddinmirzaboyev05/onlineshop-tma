@@ -38,11 +38,13 @@ export const api = {
     req<Restaurant[]>(`/restaurants${q ? `?q=${encodeURIComponent(q)}` : ""}`),
   restaurant: (id: number) => req<RestaurantDetail>(`/restaurants/${id}`),
 
-  // bitta do'kon (single store) — ro'yxatdagi birinchi do'konning to'liq ma'lumoti
+  // bitta do'kon (single store) — admin default_store bilan bir xil do'kon
   store: async (): Promise<RestaurantDetail | null> => {
-    const list = await req<Restaurant[]>("/restaurants");
-    if (!list.length) return null;
-    return req<RestaurantDetail>(`/restaurants/${list[0].id}`);
+    try {
+      return await req<RestaurantDetail>("/restaurants/default");
+    } catch {
+      return null;
+    }
   },
 
   // addresses

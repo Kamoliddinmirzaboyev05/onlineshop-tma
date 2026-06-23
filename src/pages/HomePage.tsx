@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Category, RestaurantDetail } from "../api/types";
 import { StoreListSkeleton } from "../components/Skeleton";
 import { loc, useI18n } from "../i18n";
+import { money } from "../lib/format";
+import { useCart } from "../store/cart";
 import { haptic } from "../telegram";
 
 // kartochka fonida rasm bo'lmaganda — har kategoriyaga barqaror gradient
@@ -32,7 +34,7 @@ export default function HomePage() {
   const nav = useNavigate();
   const [store, setStore] = useState<RestaurantDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [q, setQ] = useState("");
+  const cart = useCart();
 
   useEffect(() => {
     api.store().then((s) => {
@@ -41,16 +43,8 @@ export default function HomePage() {
     });
   }, []);
 
-  const cats = useMemo(() => {
-    const list = store?.categories ?? [];
-    if (!q.trim()) return list;
-    const needle = q.trim().toLowerCase();
-    return list.filter(
-      (c) =>
-        c.name_uz.toLowerCase().includes(needle) ||
-        c.name_ru.toLowerCase().includes(needle),
-    );
-  }, [store, q]);
+  const cats = store?.categories ?? [];
+  const title = store?.name && store.name !== "Do'kon" ? store.name : "AllFoods";
 
   const open = (c: Category) => {
     haptic("light");
@@ -60,30 +54,18 @@ export default function HomePage() {
   return (
     <div className="min-h-full bg-tg-bg">
       {/* ── Orange header (AllFoods) ───────────────────────────── */}
-      <div className="sticky top-0 z-20">
-        <div className="bg-gradient-to-r from-brand to-brand-dark text-white px-4 pt-3 pb-4 shadow-lg shadow-brand/20 rounded-b-3xl">
-          <motion.h1
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center text-2xl font-extrabold tracking-tight"
-          >
-            {store?.name && store.name !== "Do'kon" ? store.name : "AllFoods"}
-          </motion.h1>
-
-          <div className="mt-3 relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/70" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={t.search}
-              className="w-full rounded-2xl bg-white/20 placeholder-white/70 text-white pl-10 pr-4 py-2.5 outline-none focus:bg-white/25 transition"
-            />
-          </div>
-        </div>
+      <div className="sticky top-0 z-20 px-3 pt-2 pb-1 bg-tg-bg">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-brand text-white rounded-2xl py-3.5 shadow-md shadow-brand/25"
+        >
+          <h1 className="text-center text-2xl font-extrabold tracking-tight">{title}</h1>
+        </motion.div>
       </div>
 
       {/* ── Category cards ─────────────────────────────────────── */}
-      <div className="px-4 py-4">
+      <div className="px-3 pb-4 pt-2">
         {loading ? (
           <StoreListSkeleton />
         ) : cats.length === 0 ? (
@@ -110,20 +92,15 @@ export default function HomePage() {
                 )}
 
                 {/* qoraytiruvchi gradient — matn o'qilishi uchun */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
-
-                {/* mahsulotlar soni */}
-                <span className="absolute top-3 left-3 text-xs font-medium text-white/95 bg-black/30 backdrop-blur-sm rounded-full px-3 py-1">
-                  {c.products.length} {t.products_n}
-                </span>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
 
                 {/* sarlavha */}
-                <h2 className="absolute bottom-4 left-4 right-16 text-white text-2xl font-bold drop-shadow-md leading-tight">
+                <h2 className="absolute bottom-5 left-5 right-16 text-white text-2xl font-bold drop-shadow-md leading-tight">
                   {loc(c, "name", lang)}
                 </h2>
 
-                {/* chevron tugma */}
-                <span className="absolute bottom-4 right-4 h-11 w-11 rounded-full bg-white/25 backdrop-blur-sm flex items-center justify-center text-white">
+                {/* chevron tugma (rasmdagidek o'ng-markazda) */}
+                <span className="absolute top-1/2 -translate-y-1/2 right-4 h-12 w-12 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white">
                   <ChevronRight size={24} />
                 </span>
               </motion.button>
@@ -131,6 +108,19 @@ export default function HomePage() {
           </motion.div>
         )}
       </div>
+
+      {cart.count() > 0 && (
+        <motion.div
+          initial={{ y: 80, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="fixed bottom-20 inset-x-0 px-4 z-20"
+        >
+          <button onClick={() => nav("/cart")} className="btn-brand w-full flex justify-between shadow-lg">
+            <span>{t.cart} · {cart.count()}</span>
+            <span>{money(cart.total())} {t.sum}</span>
+          </button>
+        </motion.div>
+      )}
     </div>
   );
 }
