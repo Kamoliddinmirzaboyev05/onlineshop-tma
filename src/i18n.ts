@@ -1,0 +1,96 @@
+import { create } from "zustand";
+import { getLanguage } from "./telegram";
+
+export type Lang = "uz" | "ru";
+
+const dict = {
+  uz: {
+    restaurants: "Restoranlar",
+    search: "Qidirish…",
+    cart: "Savatcha",
+    cart_empty: "Savatcha bo'sh",
+    checkout: "Rasmiylashtirish",
+    orders: "Buyurtmalar",
+    profile: "Profil",
+    add: "Qo'shish",
+    delivery: "Yetkazib berish",
+    min_order: "Min. buyurtma",
+    free: "Bepul",
+    total: "Jami",
+    place_order: "Buyurtma berish",
+    address: "Manzil",
+    address_ph: "Yetkazish manzilini kiriting",
+    phone: "Telefon",
+    comment: "Izoh",
+    pay_cash: "Naqd (kuryerga)",
+    sum: "so'm",
+    min: "daq",
+    open: "Ochiq",
+    closed: "Yopiq",
+    no_orders: "Hali buyurtmalar yo'q",
+    back_to_menu: "Menyuga qaytish",
+    order: "Buyurtma",
+    status: {
+      pending: "Qabul qilindi",
+      confirmed: "Tasdiqlandi",
+      preparing: "Tayyorlanmoqda",
+      ready: "Tayyor",
+      delivering: "Yetkazilmoqda",
+      delivered: "Yetkazildi",
+      cancelled: "Bekor qilindi",
+    } as Record<string, string>,
+  },
+  ru: {
+    restaurants: "Рестораны",
+    search: "Поиск…",
+    cart: "Корзина",
+    cart_empty: "Корзина пуста",
+    checkout: "Оформление",
+    orders: "Заказы",
+    profile: "Профиль",
+    add: "Добавить",
+    delivery: "Доставка",
+    min_order: "Мин. заказ",
+    free: "Бесплатно",
+    total: "Итого",
+    place_order: "Заказать",
+    address: "Адрес",
+    address_ph: "Введите адрес доставки",
+    phone: "Телефон",
+    comment: "Комментарий",
+    pay_cash: "Наличные (курьеру)",
+    sum: "сум",
+    min: "мин",
+    open: "Открыто",
+    closed: "Закрыто",
+    no_orders: "Заказов пока нет",
+    back_to_menu: "Вернуться в меню",
+    order: "Заказ",
+    status: {
+      pending: "Принят",
+      confirmed: "Подтверждён",
+      preparing: "Готовится",
+      ready: "Готов",
+      delivering: "В пути",
+      delivered: "Доставлен",
+      cancelled: "Отменён",
+    } as Record<string, string>,
+  },
+};
+
+interface I18nState {
+  lang: Lang;
+  t: (typeof dict)["uz"];
+  setLang: (l: Lang) => void;
+}
+
+export const useI18n = create<I18nState>((set) => ({
+  lang: getLanguage(),
+  t: dict[getLanguage()],
+  setLang: (l) => set({ lang: l, t: dict[l] }),
+}));
+
+// localized field helper
+export function loc<T extends Record<string, unknown>>(obj: T, base: string, lang: Lang): string {
+  return (obj[`${base}_${lang}`] as string) ?? (obj[`${base}_uz`] as string) ?? "";
+}
