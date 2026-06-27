@@ -1,11 +1,27 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
+import LocationPicker from "../components/LocationPicker";
 import { useI18n } from "../i18n";
 import { money } from "../lib/format";
 import { useAuth } from "../store/auth";
 import { useCart } from "../store/cart";
 import { haptic } from "../telegram";
+
+/** Backend xato matnini ({"detail": "..."}) ajratib oladi. */
+function errorText(e: unknown): string {
+  const raw = String(e);
+  const m = raw.match(/\{.*\}/s);
+  if (m) {
+    try {
+      const d = JSON.parse(m[0]).detail;
+      if (typeof d === "string") return d;
+    } catch {
+      /* ignore */
+    }
+  }
+  return raw;
+}
 
 export default function CheckoutPage() {
   const { t, lang } = useI18n();
@@ -16,6 +32,7 @@ export default function CheckoutPage() {
   const [address, setAddress] = useState("");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [comment, setComment] = useState("");
+  const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,6 +51,10 @@ export default function CheckoutPage() {
       setError(lang === "uz" ? "Telefon raqamini kiriting" : "Введите номер телефона");
       return;
     }
+    if (!loc) {
+      setError(lang === "uz" ? "Xaritada joylashuvni belgilang" : "Отметьте местоположение на карте");
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -41,6 +62,8 @@ export default function CheckoutPage() {
         restaurant_id: cart.restaurantId,
         items: lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
         address_line: address,
+        lat: loc.lat,
+        lng: loc.lng,
         phone,
         comment,
         payment_method: "cash",
@@ -49,7 +72,7 @@ export default function CheckoutPage() {
       cart.clear();
       nav(`/orders/${order.id}`, { replace: true });
     } catch (e) {
-      setError(String(e));
+      setError(errorText(e));
       setSubmitting(false);
     }
   };
@@ -71,6 +94,20 @@ export default function CheckoutPage() {
           rows={2}
           className="w-full rounded-xl bg-tg-card px-4 py-3 outline-none mt-1"
         />
+      </div>
+
+      <div>
+        <label className="text-sm text-tg-hint">
+          {lang === "uz" ? "Joylashuv (xaritadan belgilang)" : "Местоположение (отметьте на карте)"}
+        </label>
+        <div className="mt-1">
+          <LocationPicker value={loc} onChange={(lat, lng) => setLoc({ lat, lng })} />
+        </div>
+        {loc && (
+          <p className="text-xs text-tg-hint mt-1">
+            ✓ {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
+          </p>
+        )}
       </div>
 
       <div>
