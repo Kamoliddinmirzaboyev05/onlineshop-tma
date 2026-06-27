@@ -5,26 +5,49 @@ import { api } from "../api/client";
 import type { Order } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
 import { OrderDetailSkeleton } from "../components/Skeleton";
+import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 
-const STEPS = ["pending", "confirmed", "preparing", "delivering", "delivered"] as const;
+const STEPS = ["pending", "confirmed", "preparing", "ready", "delivering", "delivered"] as const;
+const TERMINAL = new Set(["delivered", "cancelled"]);
 
 export default function OrderDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const { t, lang } = useI18n();
   const [order, setOrder] = useState<Order | null>(null);
+  const [error, setError] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    const load = () => api.order(Number(id)).then(setOrder);
+    let iv: ReturnType<typeof setInterval> | undefined;
+    const load = () =>
+      api
+        .order(Number(id))
+        .then((o) => {
+          setOrder(o);
+          setError(false);
+          // stop polling once the order reaches a terminal status
+          if (iv && TERMINAL.has(o.status)) clearInterval(iv);
+        })
+        .catch(() => setError(true));
     load();
-    const iv = setInterval(load, 10000);
+    iv = setInterval(load, 10000);
     return () => clearInterval(iv);
   }, [id]);
 
+  useEffect(() => {
+    if (!showReceipt) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowReceipt(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showReceipt]);
+
+  if (error && !order) return <ErrorState onRetry={() => window.location.reload()} />;
   if (!order) return <OrderDetailSkeleton />;
 
   const stepIdx = STEPS.indexOf(order.status as (typeof STEPS)[number]);
@@ -49,7 +72,7 @@ export default function OrderDetailPage() {
                   i <= stepIdx ? "bg-brand text-white" : "bg-tg-card text-tg-hint"
                 }`}
               >
-                {i <= stepIdx && i < stepIdx ? "✓" : i + 1}
+                {i < stepIdx ? "✓" : i + 1}
               </div>
               <span className="text-[10px] text-tg-hint mt-1 text-center leading-tight">{t.status[s]}</span>
             </div>
@@ -107,8 +130,16 @@ export default function OrderDetailPage() {
 
       {/* ── RECEIPT MODAL ─────────────────────────────────── */}
       {showReceipt && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end justify-center z-50">
-          <div className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-8 shadow-2xl">
+        <div
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-end justify-center z-50"
+          onClick={() => setShowReceipt(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-8 shadow-2xl"
+          >
             {/* Receipt header */}
             <div className="text-center mb-5">
               <div className="text-2xl font-black tracking-tight">All Foods</div>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Product, RestaurantDetail } from "../api/types";
+import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 import { useCart } from "../store/cart";
@@ -13,11 +14,20 @@ export default function SearchPage() {
   const { t, lang } = useI18n();
   const nav = useNavigate();
   const [store, setStore] = useState<RestaurantDetail | null>(null);
+  const [error, setError] = useState(false);
   const [q, setQ] = useState("");
   const cart = useCart();
 
+  const load = () => {
+    setError(false);
+    api
+      .store()
+      .then(setStore)
+      .catch(() => setError(true));
+  };
+
   useEffect(() => {
-    api.store().then(setStore);
+    load();
   }, []);
 
   const all: Product[] = useMemo(
@@ -39,6 +49,8 @@ export default function SearchPage() {
     cart.add(p);
     haptic("light");
   };
+
+  if (error) return <ErrorState onRetry={load} />;
 
   return (
     <div className="min-h-full bg-tg-bg">

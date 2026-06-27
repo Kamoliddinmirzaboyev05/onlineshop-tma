@@ -8,7 +8,7 @@ import { useCart } from "../store/cart";
 import { haptic } from "../telegram";
 
 export default function CheckoutPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const nav = useNavigate();
   const cart = useCart();
   const user = useAuth((s) => s.user);
@@ -22,8 +22,16 @@ export default function CheckoutPage() {
   const lines = Object.values(cart.lines);
 
   const submit = async () => {
+    if (cart.restaurantId == null) {
+      setError(lang === "uz" ? "Savatcha bo'sh" : "Корзина пуста");
+      return;
+    }
     if (!address.trim()) {
       setError(t.address_ph);
+      return;
+    }
+    if (!phone.trim()) {
+      setError(lang === "uz" ? "Telefon raqamini kiriting" : "Введите номер телефона");
       return;
     }
     setSubmitting(true);

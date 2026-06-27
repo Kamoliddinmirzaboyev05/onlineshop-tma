@@ -5,6 +5,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Category, Product, RestaurantDetail } from "../api/types";
 import { MenuSkeleton } from "../components/Skeleton";
+import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 import { useCart } from "../store/cart";
@@ -24,10 +25,19 @@ export default function CategoryPage() {
   const nav = useNavigate();
   const { t, lang } = useI18n();
   const [store, setStore] = useState<RestaurantDetail | null>(null);
+  const [error, setError] = useState(false);
   const cart = useCart();
 
+  const load = () => {
+    setError(false);
+    api
+      .store()
+      .then(setStore)
+      .catch(() => setError(true));
+  };
+
   useEffect(() => {
-    api.store().then(setStore);
+    load();
   }, []);
 
   const cat: Category | undefined = useMemo(
@@ -35,6 +45,7 @@ export default function CategoryPage() {
     [store, id],
   );
 
+  if (error) return <ErrorState onRetry={load} />;
   if (!store) return <MenuSkeleton />;
 
   const add = (p: Product) => {

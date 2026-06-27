@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import type { Category, RestaurantDetail } from "../api/types";
 import { StoreListSkeleton } from "../components/Skeleton";
+import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 import { useCart } from "../store/cart";
@@ -34,13 +35,26 @@ export default function HomePage() {
   const nav = useNavigate();
   const [store, setStore] = useState<RestaurantDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const cart = useCart();
 
+  const load = () => {
+    setLoading(true);
+    setError(false);
+    api
+      .store()
+      .then((s) => {
+        setStore(s);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  };
+
   useEffect(() => {
-    api.store().then((s) => {
-      setStore(s);
-      setLoading(false);
-    });
+    load();
   }, []);
 
   const cats = store?.categories ?? [];
@@ -85,7 +99,9 @@ export default function HomePage() {
 
       {/* ── Category cards ─────────────────────────────────────── */}
       <div className="px-3 pb-4 pt-1">
-        {loading ? (
+        {error ? (
+          <ErrorState onRetry={load} />
+        ) : loading ? (
           <StoreListSkeleton />
         ) : cats.length === 0 ? (
           <p className="text-center text-tg-hint py-16">{t.no_categories}</p>

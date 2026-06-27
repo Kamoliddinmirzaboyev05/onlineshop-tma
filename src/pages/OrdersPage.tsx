@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import type { Order } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
 import { OrderListSkeleton } from "../components/Skeleton";
+import ErrorState from "../components/ErrorState";
 import { useI18n } from "../i18n";
 import { money } from "../lib/format";
 
@@ -12,14 +13,28 @@ export default function OrdersPage() {
   const nav = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  const load = () => {
+    setLoading(true);
+    setError(false);
+    api
+      .myOrders()
+      .then((o) => {
+        setOrders(o);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError(true);
+        setLoading(false);
+      });
+  };
 
   useEffect(() => {
-    api.myOrders().then((o) => {
-      setOrders(o);
-      setLoading(false);
-    });
+    load();
   }, []);
 
+  if (error) return <ErrorState onRetry={load} />;
   if (loading) return <OrderListSkeleton />;
 
   if (orders.length === 0) {

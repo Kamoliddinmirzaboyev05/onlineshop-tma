@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Product, RestaurantDetail } from "../api/types";
 import { MenuSkeleton } from "../components/Skeleton";
+import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 import { useCart } from "../store/cart";
@@ -13,12 +14,23 @@ export default function RestaurantPage() {
   const nav = useNavigate();
   const { t, lang } = useI18n();
   const [data, setData] = useState<RestaurantDetail | null>(null);
+  const [error, setError] = useState(false);
   const cart = useCart();
 
+  const load = () => {
+    if (!id) return;
+    setError(false);
+    api
+      .restaurant(Number(id))
+      .then(setData)
+      .catch(() => setError(true));
+  };
+
   useEffect(() => {
-    if (id) api.restaurant(Number(id)).then(setData);
+    load();
   }, [id]);
 
+  if (error) return <ErrorState onRetry={load} />;
   if (!data) return <MenuSkeleton />;
 
   const addToCart = (p: Product) => {
