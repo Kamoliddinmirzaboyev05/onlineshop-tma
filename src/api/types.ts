@@ -60,6 +60,7 @@ export interface OrderItem {
   product_id: number;
   name_uz: string;
   name_ru: string;
+  image_url?: string | null;
   price: number;
   quantity: number;
 }
@@ -77,6 +78,7 @@ export interface Order {
   address_line: string;
   phone?: string | null;
   comment?: string | null;
+  courier_delivered_at?: string | null;
   created_at: string;
   items: OrderItem[];
 }

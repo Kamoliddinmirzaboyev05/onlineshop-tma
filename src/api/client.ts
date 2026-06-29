@@ -59,4 +59,6 @@ export const api = {
     req<Order>("/orders", { method: "POST", body: JSON.stringify(data) }),
   myOrders: () => req<Order[]>("/orders"),
   order: (id: number) => req<Order>(`/orders/${id}`),
+  confirmOrder: (id: number) =>
+    req<Order>(`/orders/${id}/confirm`, { method: "POST" }),
 };

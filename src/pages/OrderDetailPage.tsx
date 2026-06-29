@@ -19,6 +19,20 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [error, setError] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+
+  const confirm = async () => {
+    if (!order) return;
+    setConfirming(true);
+    try {
+      const o = await api.confirmOrder(order.id);
+      setOrder(o);
+    } catch {
+      setError(true);
+    } finally {
+      setConfirming(false);
+    }
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -81,11 +95,19 @@ export default function OrderDetailPage() {
       )}
 
       {/* Items */}
-      <div className="card p-4 space-y-2">
+      <div className="card p-4 space-y-3">
         {order.items.map((it) => (
-          <div key={it.id} className="flex justify-between text-sm">
-            <span>{loc(it, "name", lang)} × {it.quantity}</span>
-            <span className="font-medium">{money(it.price * it.quantity)} {t.sum}</span>
+          <div key={it.id} className="flex items-center gap-3 text-sm">
+            {it.image_url ? (
+              <img src={it.image_url} alt="" className="h-12 w-12 rounded-xl object-cover bg-tg-card shrink-0" />
+            ) : (
+              <div className="h-12 w-12 rounded-xl bg-tg-card flex items-center justify-center text-lg shrink-0">🍽</div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="font-medium truncate">{loc(it, "name", lang)}</div>
+              <div className="text-xs text-tg-hint">{it.quantity} × {money(it.price)} {t.sum}</div>
+            </div>
+            <span className="font-semibold shrink-0">{money(it.price * it.quantity)} {t.sum}</span>
           </div>
         ))}
         <hr className="border-black/10" />
@@ -105,6 +127,29 @@ export default function OrderDetailPage() {
         {order.comment && <p>💬 {order.comment}</p>}
         <p className="text-xs">{new Date(order.created_at).toLocaleString()}</p>
       </div>
+
+      {/* Kuryer yetkazdi — mijoz tasdig'i so'raladi */}
+      {order.courier_delivered_at && !isDelivered && (
+        <div className="mt-5 rounded-2xl border-2 border-emerald-400 bg-emerald-50 p-4 text-center">
+          <p className="font-semibold text-emerald-800">
+            {lang === "uz"
+              ? "Kuryer buyurtmangizni yetkazdi 🛵"
+              : "Курьер доставил ваш заказ 🛵"}
+          </p>
+          <p className="text-sm text-emerald-700 mt-0.5 mb-3">
+            {lang === "uz"
+              ? "Qabul qilganingizni tasdiqlang"
+              : "Подтвердите получение"}
+          </p>
+          <button
+            onClick={confirm}
+            disabled={confirming}
+            className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-60"
+          >
+            {confirming ? "…" : (lang === "uz" ? "✓ Qabul qildim" : "✓ Получил")}
+          </button>
+        </div>
+      )}
 
       {/* Receipt button */}
       <button
@@ -153,14 +198,19 @@ export default function OrderDetailPage() {
 
             <div className="border-t border-dashed border-slate-200 pt-4 space-y-2.5">
               {order.items.map((it) => (
-                <div key={it.id} className="flex justify-between text-sm">
-                  <div>
-                    <div className="font-medium">{loc(it, "name", lang)}</div>
+                <div key={it.id} className="flex items-center gap-2.5 text-sm">
+                  {it.image_url ? (
+                    <img src={it.image_url} alt="" className="h-10 w-10 rounded-lg object-cover bg-slate-100 shrink-0" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">🍽</div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium truncate">{loc(it, "name", lang)}</div>
                     <div className="text-xs text-slate-400">
                       {it.quantity} × {money(it.price)} {t.sum}
                     </div>
                   </div>
-                  <div className="font-semibold text-right shrink-0 ml-2">
+                  <div className="font-semibold text-right shrink-0">
                     {money(it.price * it.quantity)} {t.sum}
                   </div>
                 </div>

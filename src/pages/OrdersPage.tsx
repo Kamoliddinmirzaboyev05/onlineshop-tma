@@ -8,15 +8,17 @@ import ErrorState from "../components/ErrorState";
 import { useI18n } from "../i18n";
 import { money } from "../lib/format";
 
+const POLL_INTERVAL_MS = 15000;
+
 export default function OrdersPage() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const nav = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
-  const load = () => {
-    setLoading(true);
+  const load = (silent = false) => {
+    if (!silent) setLoading(true);
     setError(false);
     api
       .myOrders()
@@ -25,16 +27,19 @@ export default function OrdersPage() {
         setLoading(false);
       })
       .catch(() => {
-        setError(true);
+        if (!silent) setError(true);
         setLoading(false);
       });
   };
 
   useEffect(() => {
     load();
+    // Kuryer "yetkazdim" bossa, tasdiqlash so'rovi ro'yxatda jonli ko'rinishi uchun.
+    const iv = setInterval(() => load(true), POLL_INTERVAL_MS);
+    return () => clearInterval(iv);
   }, []);
 
-  if (error) return <ErrorState onRetry={load} />;
+  if (error) return <ErrorState onRetry={() => load()} />;
   if (loading) return <OrderListSkeleton />;
 
   if (orders.length === 0) {
@@ -50,21 +55,45 @@ export default function OrdersPage() {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">{t.orders}</h1>
       <div className="space-y-3">
-        {orders.map((o) => (
-          <button
-            key={o.id}
-            onClick={() => nav(`/orders/${o.id}`)}
-            className="card p-4 w-full text-left"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-semibold">№ {o.number}</span>
-              <StatusBadge status={o.status} />
-            </div>
-            <p className="text-sm text-tg-hint mt-1">
-              {o.items.length} ta · {money(o.total)} {t.sum}
-            </p>
-          </button>
-        ))}
+        {orders.map((o) => {
+          const needsConfirm = !!o.courier_delivered_at && o.status !== "delivered";
+          return (
+            <button
+              key={o.id}
+              onClick={() => nav(`/orders/${o.id}`)}
+              className={`card p-4 w-full text-left ${needsConfirm ? "ring-2 ring-emerald-400" : ""}`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-semibold">№ {o.number}</span>
+                <StatusBadge status={o.status} />
+              </div>
+
+              {/* Mahsulot rasmlari */}
+              <div className="flex items-center gap-1.5 mt-2">
+                {o.items.slice(0, 5).map((it) =>
+                  it.image_url ? (
+                    <img key={it.id} src={it.image_url} alt="" className="h-9 w-9 rounded-lg object-cover bg-tg-card shrink-0" />
+                  ) : (
+                    <div key={it.id} className="h-9 w-9 rounded-lg bg-tg-card flex items-center justify-center text-sm shrink-0">🍽</div>
+                  )
+                )}
+                {o.items.length > 5 && (
+                  <span className="text-xs text-tg-hint">+{o.items.length - 5}</span>
+                )}
+              </div>
+
+              <p className="text-sm text-tg-hint mt-2">
+                {o.items.length} ta · {money(o.total)} {t.sum}
+              </p>
+
+              {needsConfirm && (
+                <p className="mt-2 text-sm font-semibold text-emerald-600">
+                  {lang === "uz" ? "🛵 Qabul qilishni tasdiqlang →" : "🛵 Подтвердите получение →"}
+                </p>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
