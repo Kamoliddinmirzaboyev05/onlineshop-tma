@@ -1,12 +1,27 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 import LocationPicker from "../components/LocationPicker";
 import { useI18n } from "../i18n";
-import { money } from "../lib/format";
+import { formatUzPhone, money } from "../lib/format";
 import { useAuth } from "../store/auth";
 import { useCart } from "../store/cart";
 import { haptic } from "../telegram";
+
+/** Koordinatadan o'qiladigan manzilni oladi (OpenStreetMap Nominatim). */
+async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
+  try {
+    const r = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=jsonv2&accept-language=uz,ru&zoom=18`
+    );
+    if (!r.ok) return null;
+    const d = await r.json();
+    if (d?.display_name) return String(d.display_name).split(", ").slice(0, 4).join(", ");
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
 
 /** Backend xato matnini ({"detail": "..."}) ajratib oladi. */
 function errorText(e: unknown): string {
@@ -29,21 +44,32 @@ export default function CheckoutPage() {
   const cart = useCart();
   const user = useAuth((s) => s.user);
 
-  const [phone, setPhone] = useState(user?.phone ?? "");
+  const [phone, setPhone] = useState(formatUzPhone(user?.phone ?? ""));
   const [comment, setComment] = useState("");
   const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
+  const [address, setAddress] = useState("");
+  const [addrLoading, setAddrLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const lines = Object.values(cart.lines);
+
+  // Joylashuv tanlangach — manzilni avtomatik aniqlaymiz (foydalanuvchi yozmaydi).
+  useEffect(() => {
+    if (!loc) return;
+    setAddrLoading(true);
+    reverseGeocode(loc.lat, loc.lng)
+      .then((a) => setAddress(a ?? `📍 ${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)}`))
+      .finally(() => setAddrLoading(false));
+  }, [loc?.lat, loc?.lng]);
 
   const submit = async () => {
     if (cart.restaurantId == null) {
       setError(lang === "uz" ? "Savatcha bo'sh" : "Корзина пуста");
       return;
     }
-    if (!phone.trim()) {
-      setError(lang === "uz" ? "Telefon raqamini kiriting" : "Введите номер телефона");
+    if (phone.replace(/\D/g, "").length < 12) {
+      setError(lang === "uz" ? "Telefon raqamini to'liq kiriting" : "Введите номер телефона полностью");
       return;
     }
     if (!loc) {
@@ -53,10 +79,11 @@ export default function CheckoutPage() {
     setSubmitting(true);
     setError(null);
     try {
-      // Manzil yozilmaydi — joylashuv yuboriladi, server koordinatadan manzilni oladi.
+      // Manzil joylashuvdan avtomatik aniqlangan; bo'sh bo'lsa server koordinatadan oladi.
       const order = await api.placeOrder({
         restaurant_id: cart.restaurantId,
         items: lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
+        address_line: address || undefined,
         lat: loc.lat,
         lng: loc.lng,
         phone,
@@ -90,6 +117,20 @@ export default function CheckoutPage() {
             : "Геолокация определится автоматически. При необходимости передвиньте точку на карте."}
         </p>
         <LocationPicker value={loc} onChange={(lat, lng) => setLoc({ lat, lng })} />
+
+        {/* Aniqlangan manzil — avtomatik to'ldiriladi, tahrirlash ham mumkin */}
+        <input
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder={
+            loc
+              ? (addrLoading
+                  ? (lang === "uz" ? "Manzil aniqlanmoqda…" : "Определение адреса…")
+                  : t.address_ph)
+              : (lang === "uz" ? "Joylashuv kutilmoqda…" : "Ожидание геолокации…")
+          }
+          className="w-full rounded-xl bg-tg-card px-4 py-3 outline-none mt-2"
+        />
         <p className={`text-xs mt-1 ${loc ? "text-emerald-600" : "text-tg-hint"}`}>
           {loc
             ? (lang === "uz" ? "✓ Joylashuv belgilandi" : "✓ Местоположение отмечено")
@@ -101,8 +142,9 @@ export default function CheckoutPage() {
         <label className="text-sm text-tg-hint">{t.phone}</label>
         <input
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="+998 90 123 45 67"
+          onChange={(e) => setPhone(formatUzPhone(e.target.value))}
+          inputMode="tel"
+          placeholder="+998 88 888 88 88"
           className="w-full rounded-xl bg-tg-card px-4 py-3 outline-none mt-1"
         />
       </div>
@@ -114,11 +156,6 @@ export default function CheckoutPage() {
           onChange={(e) => setComment(e.target.value)}
           className="w-full rounded-xl bg-tg-card px-4 py-3 outline-none mt-1"
         />
-      </div>
-
-      <div className="card p-4 flex items-center gap-3">
-        <span className="text-2xl">💵</span>
-        <span>{t.pay_cash}</span>
       </div>
 
       <div className="flex justify-between text-tg-hint">
