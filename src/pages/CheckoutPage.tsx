@@ -29,7 +29,6 @@ export default function CheckoutPage() {
   const cart = useCart();
   const user = useAuth((s) => s.user);
 
-  const [address, setAddress] = useState("");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [comment, setComment] = useState("");
   const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
@@ -43,25 +42,21 @@ export default function CheckoutPage() {
       setError(lang === "uz" ? "Savatcha bo'sh" : "Корзина пуста");
       return;
     }
-    if (!address.trim()) {
-      setError(t.address_ph);
-      return;
-    }
     if (!phone.trim()) {
       setError(lang === "uz" ? "Telefon raqamini kiriting" : "Введите номер телефона");
       return;
     }
     if (!loc) {
-      setError(lang === "uz" ? "Xaritada joylashuvni belgilang" : "Отметьте местоположение на карте");
+      setError(lang === "uz" ? "Joylashuvga ruxsat bering yoki xaritada belgilang" : "Разрешите геолокацию или отметьте на карте");
       return;
     }
     setSubmitting(true);
     setError(null);
     try {
+      // Manzil yozilmaydi — joylashuv yuboriladi, server koordinatadan manzilni oladi.
       const order = await api.placeOrder({
         restaurant_id: cart.restaurantId,
         items: lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
-        address_line: address,
         lat: loc.lat,
         lng: loc.lng,
         phone,
@@ -86,28 +81,20 @@ export default function CheckoutPage() {
       <h1 className="text-2xl font-bold">{t.checkout}</h1>
 
       <div>
-        <label className="text-sm text-tg-hint">{t.address}</label>
-        <textarea
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          placeholder={t.address_ph}
-          rows={2}
-          className="w-full rounded-xl bg-tg-card px-4 py-3 outline-none mt-1"
-        />
-      </div>
-
-      <div>
-        <label className="text-sm text-tg-hint">
-          {lang === "uz" ? "Joylashuv (xaritadan belgilang)" : "Местоположение (отметьте на карте)"}
+        <label className="text-sm font-medium">
+          📍 {lang === "uz" ? "Yetkazib berish manzili" : "Адрес доставки"}
         </label>
-        <div className="mt-1">
-          <LocationPicker value={loc} onChange={(lat, lng) => setLoc({ lat, lng })} />
-        </div>
-        {loc && (
-          <p className="text-xs text-tg-hint mt-1">
-            ✓ {loc.lat.toFixed(5)}, {loc.lng.toFixed(5)}
-          </p>
-        )}
+        <p className="text-xs text-tg-hint mt-0.5 mb-1">
+          {lang === "uz"
+            ? "Joylashuvingiz avtomatik aniqlanadi. Kerak bo'lsa nuqtani xaritada suring."
+            : "Геолокация определится автоматически. При необходимости передвиньте точку на карте."}
+        </p>
+        <LocationPicker value={loc} onChange={(lat, lng) => setLoc({ lat, lng })} />
+        <p className={`text-xs mt-1 ${loc ? "text-emerald-600" : "text-tg-hint"}`}>
+          {loc
+            ? (lang === "uz" ? "✓ Joylashuv belgilandi" : "✓ Местоположение отмечено")
+            : (lang === "uz" ? "Joylashuv aniqlanmoqda…" : "Определение местоположения…")}
+        </p>
       </div>
 
       <div>
