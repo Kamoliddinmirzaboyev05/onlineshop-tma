@@ -129,6 +129,28 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
+      {/* Masofa + taxminiy yetkazib berish vaqti */}
+      {(order.distance_km != null || order.eta_minutes != null) && (
+        <div className="mt-4 flex gap-3">
+          {order.distance_km != null && (
+            <div className="flex-1 card px-3 py-2.5 text-center">
+              <div className="text-xs text-tg-hint">{lang === "uz" ? "Masofa" : "Расстояние"}</div>
+              <div className="font-bold text-sm mt-0.5">
+                {order.distance_km < 1
+                  ? `${Math.round(order.distance_km * 1000)} m`
+                  : `${order.distance_km.toFixed(1)} km`}
+              </div>
+            </div>
+          )}
+          {order.eta_minutes != null && (
+            <div className="flex-1 card px-3 py-2.5 text-center">
+              <div className="text-xs text-tg-hint">{lang === "uz" ? "Taxminiy vaqt" : "Время"}</div>
+              <div className="font-bold text-sm mt-0.5 text-brand">~{order.eta_minutes} {lang === "uz" ? "daq" : "мин"}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="mt-4 text-sm text-tg-hint space-y-1">
         <p>📍 {order.address_line}</p>
         {order.phone && <p>📱 {order.phone}</p>}
