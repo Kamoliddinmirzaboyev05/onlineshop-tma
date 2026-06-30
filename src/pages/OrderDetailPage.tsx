@@ -9,7 +9,7 @@ import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
 import { money } from "../lib/format";
 
-const STEPS = ["pending", "confirmed", "preparing", "ready", "delivering", "delivered"] as const;
+const STEPS = ["pending", "confirmed", "preparing", "ready", "accepted", "delivering", "delivered"] as const;
 const TERMINAL = new Set(["delivered", "cancelled"]);
 
 export default function OrderDetailPage() {
@@ -97,7 +97,7 @@ export default function OrderDetailPage() {
       {/* Items */}
       <div className="card p-4 space-y-3">
         {order.items.map((it) => (
-          <div key={it.id} className="flex items-center gap-3 text-sm">
+          <div key={it.id} className="flex items-start gap-3 text-sm">
             {it.image_url ? (
               <img src={it.image_url} alt="" className="h-12 w-12 rounded-xl object-cover bg-tg-card shrink-0" />
             ) : (
@@ -105,7 +105,15 @@ export default function OrderDetailPage() {
             )}
             <div className="min-w-0 flex-1">
               <div className="font-medium truncate">{loc(it, "name", lang)}</div>
-              <div className="text-xs text-tg-hint">{it.quantity} × {money(it.price)} {t.sum}</div>
+              <div className="text-xs text-tg-hint">
+                {it.quantity} × {money(it.price)} {t.sum}
+                {it.unit ? ` / ${it.unit}` : ""}
+              </div>
+              {it.note && (
+                <div className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-1 flex items-center gap-1">
+                  💬 {it.note}
+                </div>
+              )}
             </div>
             <span className="font-semibold shrink-0">{money(it.price * it.quantity)} {t.sum}</span>
           </div>
@@ -198,7 +206,7 @@ export default function OrderDetailPage() {
 
             <div className="border-t border-dashed border-slate-200 pt-4 space-y-2.5">
               {order.items.map((it) => (
-                <div key={it.id} className="flex items-center gap-2.5 text-sm">
+                <div key={it.id} className="flex items-start gap-2.5 text-sm">
                   {it.image_url ? (
                     <img src={it.image_url} alt="" className="h-10 w-10 rounded-lg object-cover bg-slate-100 shrink-0" />
                   ) : (
@@ -208,7 +216,11 @@ export default function OrderDetailPage() {
                     <div className="font-medium truncate">{loc(it, "name", lang)}</div>
                     <div className="text-xs text-slate-400">
                       {it.quantity} × {money(it.price)} {t.sum}
+                      {it.unit ? ` / ${it.unit}` : ""}
                     </div>
+                    {it.note && (
+                      <div className="text-[10px] text-amber-700 mt-0.5">💬 {it.note}</div>
+                    )}
                   </div>
                   <div className="font-semibold text-right shrink-0">
                     {money(it.price * it.quantity)} {t.sum}

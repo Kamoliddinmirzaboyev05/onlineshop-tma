@@ -8,6 +8,7 @@ export interface Product {
   description_ru?: string | null;
   image_url?: string | null;
   price: number;
+  unit?: string;
   is_available: boolean;
 }
 
@@ -53,7 +54,7 @@ export interface Address {
 
 export type OrderStatus =
   | "pending" | "confirmed" | "preparing" | "ready"
-  | "delivering" | "delivered" | "cancelled";
+  | "accepted" | "delivering" | "delivered" | "cancelled";
 
 export interface OrderItem {
   id: number;
@@ -63,6 +64,8 @@ export interface OrderItem {
   image_url?: string | null;
   price: number;
   quantity: number;
+  unit?: string;
+  note?: string | null;
 }
 
 export interface Order {
@@ -78,6 +81,10 @@ export interface Order {
   address_line: string;
   phone?: string | null;
   comment?: string | null;
+  distance_km?: number | null;
+  eta_minutes?: number | null;
+  courier_accepted_at?: string | null;
+  delivering_started_at?: string | null;
   courier_delivered_at?: string | null;
   created_at: string;
   items: OrderItem[];

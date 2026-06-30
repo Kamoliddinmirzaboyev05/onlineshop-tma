@@ -5,6 +5,7 @@ import type { Product } from "../api/types";
 export interface CartLine {
   product: Product;
   quantity: number;
+  note?: string;
 }
 
 interface CartState {
@@ -13,6 +14,7 @@ interface CartState {
   add: (product: Product) => void;
   remove: (productId: number) => void;
   setQty: (productId: number, qty: number) => void;
+  setNote: (productId: number, note: string) => void;
   clear: () => void;
   count: () => number;
   total: () => number;
@@ -52,6 +54,14 @@ export const useCart = create<CartState>()(
           }
           const restaurantId = Object.keys(lines).length ? s.restaurantId : null;
           return { lines, restaurantId };
+        }),
+
+      setNote: (productId, note) =>
+        set((s) => {
+          if (!s.lines[productId]) return s;
+          const lines = { ...s.lines };
+          lines[productId] = { ...lines[productId], note: note || undefined };
+          return { lines };
         }),
 
       clear: () => set({ lines: {}, restaurantId: null }),

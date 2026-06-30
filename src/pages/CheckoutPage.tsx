@@ -82,7 +82,11 @@ export default function CheckoutPage() {
       // Manzil joylashuvdan avtomatik aniqlangan; bo'sh bo'lsa server koordinatadan oladi.
       const order = await api.placeOrder({
         restaurant_id: cart.restaurantId,
-        items: lines.map((l) => ({ product_id: l.product.id, quantity: l.quantity })),
+        items: lines.map((l) => ({
+          product_id: l.product.id,
+          quantity: l.quantity,
+          note: l.note || undefined,
+        })),
         address_line: address || undefined,
         lat: loc.lat,
         lng: loc.lng,

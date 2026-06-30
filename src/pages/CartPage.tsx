@@ -22,35 +22,52 @@ export default function CartPage() {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">{t.cart}</h1>
       <div className="space-y-3">
-        {lines.map(({ product, quantity }) => (
-          <div key={product.id} className="card p-3 flex items-center gap-3">
-            <div className="h-14 w-14 shrink-0 rounded-xl bg-brand-light flex items-center justify-center overflow-hidden text-2xl">
-              {product.image_url ? (
-                <img src={product.image_url} alt="" className="h-full w-full object-cover" />
-              ) : (
-                "🛒"
-              )}
+        {lines.map(({ product, quantity, note }) => (
+          <div key={product.id} className="card p-3">
+            <div className="flex items-center gap-3">
+              <div className="h-14 w-14 shrink-0 rounded-xl bg-brand-light flex items-center justify-center overflow-hidden text-2xl">
+                {product.image_url ? (
+                  <img src={product.image_url} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  "🛒"
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-medium line-clamp-1">{loc(product, "name", lang)}</h3>
+                <p className="text-sm text-tg-hint">
+                  {money(product.price)} {t.sum}
+                  {product.unit ? ` / ${product.unit}` : ""}
+                </p>
+                <p className="text-sm font-semibold">{money(product.price * quantity)} {t.sum}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => cart.setQty(product.id, quantity - 1)}
+                  className="w-8 h-8 rounded-full bg-tg-bg border text-lg active:scale-90 transition"
+                >
+                  −
+                </button>
+                <span className="w-6 text-center font-semibold">{quantity}</span>
+                <button
+                  onClick={() => cart.setQty(product.id, quantity + 1)}
+                  className="w-8 h-8 rounded-full bg-brand text-white text-lg active:scale-90 transition"
+                >
+                  +
+                </button>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium line-clamp-1">{loc(product, "name", lang)}</h3>
-              <p className="text-sm text-tg-hint">{money(product.price)} {t.sum}</p>
-              <p className="text-sm font-semibold">{money(product.price * quantity)} {t.sum}</p>
-            </div>
-            <div className="flex items-center gap-2 shrink-0">
-              <button
-                onClick={() => cart.setQty(product.id, quantity - 1)}
-                className="w-8 h-8 rounded-full bg-tg-bg border text-lg active:scale-90 transition"
-              >
-                −
-              </button>
-              <span className="w-6 text-center font-semibold">{quantity}</span>
-              <button
-                onClick={() => cart.setQty(product.id, quantity + 1)}
-                className="w-8 h-8 rounded-full bg-brand text-white text-lg active:scale-90 transition"
-              >
-                +
-              </button>
-            </div>
+
+            {/* Mahsulotga izoh — masalan "yetilgan bo'lsin", "yupqa to'g'rab bering" */}
+            <input
+              value={note ?? ""}
+              onChange={(e) => cart.setNote(product.id, e.target.value)}
+              placeholder={
+                lang === "uz"
+                  ? "💬 Mahsulotga izoh (ixtiyoriy)"
+                  : "💬 Комментарий к товару (необязательно)"
+              }
+              className="mt-2 w-full rounded-xl bg-tg-bg border px-3 py-2 text-sm outline-none focus:border-brand"
+            />
           </div>
         ))}
       </div>
