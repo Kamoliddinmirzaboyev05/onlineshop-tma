@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { loc, useI18n } from "../i18n";
-import { money } from "../lib/format";
+import { money, qtyUnit, unitLabel } from "../lib/format";
 import { useCart } from "../store/cart";
 
 export default function CartPage() {
@@ -36,9 +36,11 @@ export default function CartPage() {
                 <h3 className="font-medium line-clamp-1">{loc(product, "name", lang)}</h3>
                 <p className="text-sm text-tg-hint">
                   {money(product.price)} {t.sum}
-                  {product.unit ? ` / ${product.unit}` : ""}
+                  {product.unit ? `/${unitLabel(product.unit, lang)}` : ""}
                 </p>
-                <p className="text-sm font-semibold">{money(product.price * quantity)} {t.sum}</p>
+                <p className="text-sm font-semibold">
+                  {qtyUnit(quantity, product.unit, lang)} · {money(product.price * quantity)} {t.sum}
+                </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button

@@ -1,22 +1,30 @@
-import { CheckCircle2, Printer } from "lucide-react";
+import { Check, CheckCircle2, Printer, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
-import type { Order } from "../api/types";
+import type { Order, RestaurantDetail } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
 import { OrderDetailSkeleton } from "../components/Skeleton";
 import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
-import { money } from "../lib/format";
+import { money, qtyUnit } from "../lib/format";
 
-const STEPS = ["pending", "confirmed", "preparing", "ready", "accepted", "delivering", "delivered"] as const;
+const STAGES = ["confirmed", "delivering", "delivered"] as const;
 const TERMINAL = new Set(["delivered", "cancelled"]);
+
+/** 8 ta ichki holatni 3 ko'rinadigan bosqichga siqamiz. */
+function stageIndex(status: string): number {
+  if (status === "delivered") return 2;
+  if (status === "delivering") return 1;
+  return 0; // pending, confirmed, preparing, ready, accepted
+}
 
 export default function OrderDetailPage() {
   const { id } = useParams();
   const nav = useNavigate();
   const { t, lang } = useI18n();
   const [order, setOrder] = useState<Order | null>(null);
+  const [store, setStore] = useState<RestaurantDetail | null>(null);
   const [error, setError] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -35,6 +43,10 @@ export default function OrderDetailPage() {
   };
 
   useEffect(() => {
+    api.store().then(setStore).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!id) return;
     let iv: ReturnType<typeof setInterval> | undefined;
     const load = () =>
@@ -43,7 +55,6 @@ export default function OrderDetailPage() {
         .then((o) => {
           setOrder(o);
           setError(false);
-          // stop polling once the order reaches a terminal status
           if (iv && TERMINAL.has(o.status)) clearInterval(iv);
         })
         .catch(() => setError(true));
@@ -64,8 +75,10 @@ export default function OrderDetailPage() {
   if (error && !order) return <ErrorState onRetry={() => window.location.reload()} />;
   if (!order) return <OrderDetailSkeleton />;
 
-  const stepIdx = STEPS.indexOf(order.status as (typeof STEPS)[number]);
+  const curStage = stageIndex(order.status);
   const isDelivered = order.status === "delivered";
+  const isCancelled = order.status === "cancelled";
+  const payLabel = order.payment_method === "card" ? t.pay_card : t.pay_cash;
 
   return (
     <div className="p-4 pb-8">
@@ -76,25 +89,48 @@ export default function OrderDetailPage() {
         <StatusBadge status={order.status} />
       </div>
 
-      {/* Progress bar */}
-      {order.status !== "cancelled" && (
-        <div className="flex justify-between mt-5 mb-6">
-          {STEPS.map((s, i) => (
-            <div key={s} className="flex-1 flex flex-col items-center">
-              <div
-                className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold ${
-                  i <= stepIdx ? "bg-brand text-white" : "bg-tg-card text-tg-hint"
-                }`}
-              >
-                {i < stepIdx ? "✓" : i + 1}
+      {/* 3-bosqichli progress */}
+      {isCancelled ? (
+        <div className="mt-4 mb-5 flex items-center gap-2 rounded-2xl bg-red-50 text-red-600 px-4 py-3">
+          <XCircle size={20} />
+          <span className="font-semibold">{t.cancelled_note}</span>
+        </div>
+      ) : (
+        <div className="mt-6 mb-7 flex items-start">
+          {STAGES.map((s, i) => {
+            const done = i < curStage;
+            const active = i === curStage;
+            return (
+              <div key={s} className="flex-1 flex flex-col items-center relative">
+                {/* ulagich chiziq (chapdan) */}
+                {i > 0 && (
+                  <span
+                    className={`absolute top-4 right-1/2 w-full h-0.5 -z-0 ${
+                      i <= curStage ? "bg-brand" : "bg-tg-card"
+                    }`}
+                  />
+                )}
+                <div
+                  className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition ${
+                    done || active ? "bg-brand text-white" : "bg-tg-card text-tg-hint"
+                  } ${active ? "ring-4 ring-brand/20" : ""}`}
+                >
+                  {done ? <Check size={16} /> : i + 1}
+                </div>
+                <span
+                  className={`text-[11px] mt-1.5 text-center leading-tight ${
+                    i <= curStage ? "text-tg-text font-medium" : "text-tg-hint"
+                  }`}
+                >
+                  {t.stages[s]}
+                </span>
               </div>
-              <span className="text-[10px] text-tg-hint mt-1 text-center leading-tight">{t.status[s]}</span>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Items */}
+      {/* Mahsulotlar */}
       <div className="card p-4 space-y-3">
         {order.items.map((it) => (
           <div key={it.id} className="flex items-start gap-3 text-sm">
@@ -106,8 +142,7 @@ export default function OrderDetailPage() {
             <div className="min-w-0 flex-1">
               <div className="font-medium truncate">{loc(it, "name", lang)}</div>
               <div className="text-xs text-tg-hint">
-                {it.quantity} × {money(it.price)} {t.sum}
-                {it.unit ? ` / ${it.unit}` : ""}
+                {qtyUnit(it.quantity, it.unit, lang)} × {money(it.price)} {t.sum}
               </div>
               {it.note && (
                 <div className="text-[11px] text-amber-700 bg-amber-50 rounded-lg px-2 py-1 mt-1 flex items-center gap-1">
@@ -145,7 +180,7 @@ export default function OrderDetailPage() {
           {order.eta_minutes != null && (
             <div className="flex-1 card px-3 py-2.5 text-center">
               <div className="text-xs text-tg-hint">{lang === "uz" ? "Taxminiy vaqt" : "Время"}</div>
-              <div className="font-bold text-sm mt-0.5 text-brand">~{order.eta_minutes} {lang === "uz" ? "daq" : "мин"}</div>
+              <div className="font-bold text-sm mt-0.5 text-brand">~{order.eta_minutes} {t.min}</div>
             </div>
           )}
         </div>
@@ -154,6 +189,7 @@ export default function OrderDetailPage() {
       <div className="mt-4 text-sm text-tg-hint space-y-1">
         <p>📍 {order.address_line}</p>
         {order.phone && <p>📱 {order.phone}</p>}
+        <p>💳 {payLabel}</p>
         {order.comment && <p>💬 {order.comment}</p>}
         <p className="text-xs">{new Date(order.created_at).toLocaleString()}</p>
       </div>
@@ -162,32 +198,28 @@ export default function OrderDetailPage() {
       {order.courier_delivered_at && !isDelivered && (
         <div className="mt-5 rounded-2xl border-2 border-emerald-400 bg-emerald-50 p-4 text-center">
           <p className="font-semibold text-emerald-800">
-            {lang === "uz"
-              ? "Kuryer buyurtmangizni yetkazdi 🛵"
-              : "Курьер доставил ваш заказ 🛵"}
+            {lang === "uz" ? "Kuryer buyurtmangizni yetkazdi 🛵" : "Курьер доставил ваш заказ 🛵"}
           </p>
           <p className="text-sm text-emerald-700 mt-0.5 mb-3">
-            {lang === "uz"
-              ? "Qabul qilganingizni tasdiqlang"
-              : "Подтвердите получение"}
+            {lang === "uz" ? "Qabul qilganingizni tasdiqlang" : "Подтвердите получение"}
           </p>
           <button
             onClick={confirm}
             disabled={confirming}
             className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-60"
           >
-            {confirming ? "…" : (lang === "uz" ? "✓ Qabul qildim" : "✓ Получил")}
+            {confirming ? "…" : lang === "uz" ? "✓ Qabul qildim" : "✓ Получил"}
           </button>
         </div>
       )}
 
-      {/* Receipt button */}
+      {/* Chekni ko'rish */}
       <button
         onClick={() => setShowReceipt(true)}
         className="mt-5 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-slate-200 text-sm text-tg-hint hover:bg-tg-card transition"
       >
         <Printer size={16} />
-        {lang === "uz" ? "Chekni ko'rish" : "Посмотреть чек"}
+        {t.view_receipt}
       </button>
 
       {/* Delivered celebration */}
@@ -213,20 +245,33 @@ export default function OrderDetailPage() {
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-8 shadow-2xl"
+            className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-8 shadow-2xl max-h-[90vh] overflow-y-auto"
           >
-            {/* Receipt header */}
-            <div className="text-center mb-5">
-              <div className="text-2xl font-black tracking-tight">All Foods</div>
-              <div className="text-xs text-slate-400 mt-0.5">
-                {new Date(order.created_at).toLocaleString()}
+            {/* Header — do'kon ma'lumoti */}
+            <div className="text-center mb-4">
+              <div className="text-2xl font-black tracking-tight">{store?.name || "All Foods"}</div>
+              {store?.address && <div className="text-xs text-slate-400 mt-1">📍 {store.address}</div>}
+              {store?.phones?.[0] && <div className="text-xs text-slate-400">📱 {store.phones[0]}</div>}
+            </div>
+
+            {/* Meta */}
+            <div className="border-t border-dashed border-slate-200 pt-3 text-xs text-slate-500 space-y-1">
+              <div className="flex justify-between">
+                <span>{t.order} №</span>
+                <span className="font-semibold text-slate-700">{order.number}</span>
               </div>
-              <div className="mt-2 text-sm font-semibold text-slate-600">
-                {lang === "uz" ? "Buyurtma" : "Заказ"} № {order.number}
+              <div className="flex justify-between">
+                <span>{lang === "uz" ? "Sana" : "Дата"}</span>
+                <span>{new Date(order.created_at).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>{lang === "uz" ? "Holat" : "Статус"}</span>
+                <span>{t.status[order.status]}</span>
               </div>
             </div>
 
-            <div className="border-t border-dashed border-slate-200 pt-4 space-y-2.5">
+            {/* Mahsulotlar */}
+            <div className="border-t border-dashed border-slate-200 mt-3 pt-3 space-y-2.5">
               {order.items.map((it) => (
                 <div key={it.id} className="flex items-start gap-2.5 text-sm">
                   {it.image_url ? (
@@ -237,12 +282,9 @@ export default function OrderDetailPage() {
                   <div className="min-w-0 flex-1">
                     <div className="font-medium truncate">{loc(it, "name", lang)}</div>
                     <div className="text-xs text-slate-400">
-                      {it.quantity} × {money(it.price)} {t.sum}
-                      {it.unit ? ` / ${it.unit}` : ""}
+                      {qtyUnit(it.quantity, it.unit, lang)} × {money(it.price)} {t.sum}
                     </div>
-                    {it.note && (
-                      <div className="text-[10px] text-amber-700 mt-0.5">💬 {it.note}</div>
-                    )}
+                    {it.note && <div className="text-[10px] text-amber-700 mt-0.5">💬 {it.note}</div>}
                   </div>
                   <div className="font-semibold text-right shrink-0">
                     {money(it.price * it.quantity)} {t.sum}
@@ -251,14 +293,19 @@ export default function OrderDetailPage() {
               ))}
             </div>
 
+            {/* Yig'indilar */}
             <div className="border-t border-dashed border-slate-200 mt-4 pt-3 space-y-1.5">
               <div className="flex justify-between text-sm text-slate-500">
-                <span>{lang === "uz" ? "Mahsulotlar" : "Товары"}</span>
+                <span>{t.items_label}</span>
                 <span>{money(order.items_total)} {t.sum}</span>
               </div>
               <div className="flex justify-between text-sm text-slate-500">
                 <span>{t.delivery}</span>
                 <span>{order.delivery_fee === 0 ? t.free : `${money(order.delivery_fee)} ${t.sum}`}</span>
+              </div>
+              <div className="flex justify-between text-sm text-slate-500">
+                <span>{t.payment}</span>
+                <span>{payLabel}</span>
               </div>
             </div>
 
@@ -267,21 +314,19 @@ export default function OrderDetailPage() {
               <span className="font-black text-lg">{money(order.total)} {t.sum}</span>
             </div>
 
-            <div className="mt-4 text-xs text-center text-slate-400">
-              📍 {order.address_line}
+            {/* Yetkazish manzili */}
+            <div className="mt-4 text-xs text-slate-400 space-y-0.5">
+              <div>📍 {order.address_line}</div>
+              {order.phone && <div>📱 {order.phone}</div>}
             </div>
 
-            <div className="mt-1 text-xs text-center text-slate-400">
-              {lang === "uz"
-                ? "Xaridingiz uchun rahmat! 🙏"
-                : "Спасибо за покупку! 🙏"}
-            </div>
+            <div className="mt-3 text-xs text-center text-slate-400">{t.thank_you}</div>
 
             <button
               onClick={() => setShowReceipt(false)}
               className="mt-5 w-full py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm"
             >
-              {lang === "uz" ? "Yopish" : "Закрыть"}
+              {t.close}
             </button>
           </div>
         </div>

@@ -28,6 +28,10 @@ export interface Restaurant {
   description_ru?: string | null;
   logo_url?: string | null;
   cover_url?: string | null;
+  address?: string | null;
+  owner_name?: string | null;
+  phones?: string[];
+  socials?: Record<string, string>;
   is_active: boolean;
   is_open: boolean;
   rating: number;

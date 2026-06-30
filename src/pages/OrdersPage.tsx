@@ -68,13 +68,17 @@ export default function OrdersPage() {
                 <StatusBadge status={o.status} />
               </div>
 
+              <div className="text-xs text-tg-hint mt-0.5">
+                {new Date(o.created_at).toLocaleString()}
+              </div>
+
               {/* Mahsulot rasmlari */}
-              <div className="flex items-center gap-1.5 mt-2">
+              <div className="flex items-center gap-1.5 mt-3">
                 {o.items.slice(0, 5).map((it) =>
                   it.image_url ? (
-                    <img key={it.id} src={it.image_url} alt="" className="h-9 w-9 rounded-lg object-cover bg-tg-card shrink-0" />
+                    <img key={it.id} src={it.image_url} alt="" className="h-10 w-10 rounded-lg object-cover bg-tg-card shrink-0" />
                   ) : (
-                    <div key={it.id} className="h-9 w-9 rounded-lg bg-tg-card flex items-center justify-center text-sm shrink-0">🍽</div>
+                    <div key={it.id} className="h-10 w-10 rounded-lg bg-tg-card flex items-center justify-center text-sm shrink-0">🍽</div>
                   )
                 )}
                 {o.items.length > 5 && (
@@ -82,9 +86,14 @@ export default function OrdersPage() {
                 )}
               </div>
 
-              <p className="text-sm text-tg-hint mt-2">
-                {o.items.length} ta · {money(o.total)} {t.sum}
-              </p>
+              <div className="flex items-center justify-between mt-3 pt-3 border-t border-black/5">
+                <span className="text-sm text-tg-hint">
+                  {o.items.length} {t.products_n}
+                </span>
+                <span className="font-bold">
+                  {money(o.total)} {t.sum}
+                </span>
+              </div>
 
               {needsConfirm && (
                 <p className="mt-2 text-sm font-semibold text-emerald-600">

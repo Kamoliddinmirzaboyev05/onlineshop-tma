@@ -2,6 +2,30 @@ export function money(value: number): string {
   return value.toLocaleString("ru-RU").replace(/,/g, " ");
 }
 
+// Ruscha qisqartmalar — birlik uz tilida saqlanadi (kg/dona/litr/gramm).
+const RU_UNIT: Record<string, string> = {
+  dona: "шт",
+  kg: "кг",
+  litr: "л",
+  gramm: "г",
+  bog: "пуч.",
+};
+
+/** O'lchov birligi yorlig'i (til bo'yicha). */
+export function unitLabel(unit?: string | null, lang = "uz"): string {
+  if (!unit) return "";
+  return lang === "ru" ? RU_UNIT[unit] ?? unit : unit;
+}
+
+/** Miqdor + o'lchov birligi: "2 kg", "3 dona". Birlik bo'lmasa faqat son. */
+export function qtyUnit(quantity: number, unit?: string | null, lang = "uz"): string {
+  const n = Number.isInteger(quantity)
+    ? String(quantity)
+    : String(Number(quantity.toFixed(3)));
+  const u = unitLabel(unit, lang);
+  return u ? `${n} ${u}` : n;
+}
+
 /** O'zbek raqamini "+998 88 888 88 88" ko'rinishiga keltiradi.
  *  Bo'sh kiritma — bo'sh qatlam (placeholder ko'rinishi uchun). */
 export function formatUzPhone(raw: string): string {

@@ -7,7 +7,7 @@ import type { Category, Product, RestaurantDetail } from "../api/types";
 import { MenuSkeleton } from "../components/Skeleton";
 import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
-import { money } from "../lib/format";
+import { money, unitLabel } from "../lib/format";
 import { useCart } from "../store/cart";
 import { haptic } from "../telegram";
 
@@ -113,6 +113,7 @@ export default function CategoryPage() {
                   <div className="mt-auto pt-2 flex items-center justify-between gap-2">
                     <span className="font-semibold text-sm">
                       {money(p.price)} {t.sum}
+                      {p.unit ? <span className="text-tg-hint font-normal">/{unitLabel(p.unit, lang)}</span> : null}
                     </span>
                     <AnimatePresence mode="wait" initial={false}>
                       {qtyOf(p) === 0 ? (
