@@ -85,7 +85,6 @@ export default function CheckoutPage() {
         items: lines.map((l) => ({
           product_id: l.product.id,
           quantity: l.quantity,
-          note: l.note || undefined,
         })),
         address_line: address || undefined,
         lat: loc.lat,

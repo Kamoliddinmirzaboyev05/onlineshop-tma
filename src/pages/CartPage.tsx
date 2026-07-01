@@ -22,7 +22,7 @@ export default function CartPage() {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">{t.cart}</h1>
       <div className="space-y-3">
-        {lines.map(({ product, quantity, note }) => (
+        {lines.map(({ product, quantity }) => (
           <div key={product.id} className="card p-3">
             <div className="flex items-center gap-3">
               <div className="h-14 w-14 shrink-0 rounded-xl bg-brand-light flex items-center justify-center overflow-hidden text-2xl">
@@ -58,18 +58,6 @@ export default function CartPage() {
                 </button>
               </div>
             </div>
-
-            {/* Mahsulotga izoh — masalan "yetilgan bo'lsin", "yupqa to'g'rab bering" */}
-            <input
-              value={note ?? ""}
-              onChange={(e) => cart.setNote(product.id, e.target.value)}
-              placeholder={
-                lang === "uz"
-                  ? "💬 Mahsulotga izoh (ixtiyoriy)"
-                  : "💬 Комментарий к товару (необязательно)"
-              }
-              className="mt-2 w-full rounded-xl bg-tg-bg border px-3 py-2 text-sm outline-none focus:border-brand"
-            />
           </div>
         ))}
       </div>
