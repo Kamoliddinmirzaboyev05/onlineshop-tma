@@ -87,80 +87,87 @@ export default function CategoryPage() {
         </motion.h1>
       </div>
 
-      {/* ── Products grid ──────────────────────────────────────── */}
+      {/* ── Subcategory sections ──────────────────────────────── */}
       <div className="px-4 py-4 pb-28">
-        {!cat || cat.products.length === 0 ? (
-          <p className="text-center text-tg-hint py-16">{t.empty_category}</p>
-        ) : (
-          <motion.div
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="grid grid-cols-2 gap-3"
-          >
-            {cat.products.map((p) => (
-              <motion.div key={p.id} variants={item} className="card flex flex-col">
-                <div className="h-28 bg-brand-light flex items-center justify-center text-3xl">
-                  {p.image_url ? (
-                    <img src={p.image_url} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    "🛒"
-                  )}
-                </div>
-                <div className="p-3 flex flex-col flex-1">
-                  <h3 className="font-medium text-sm leading-tight line-clamp-2">
-                    {loc(p, "name", lang)}
-                  </h3>
-                  <div className="mt-auto pt-2 flex items-center justify-between gap-2">
-                    <span className="font-semibold text-sm">
-                      {money(p.price)} {t.sum}
-                      {p.unit ? <span className="text-tg-hint font-normal">/{unitLabel(p.unit, lang)}</span> : null}
-                    </span>
-                    <AnimatePresence mode="wait" initial={false}>
-                      {qtyOf(p) === 0 ? (
-                        <motion.button
-                          key="add"
-                          initial={{ scale: 0.6, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0.6, opacity: 0 }}
-                          whileTap={{ scale: 0.85 }}
-                          onClick={() => add(p)}
-                          className="h-8 w-8 shrink-0 rounded-full bg-brand text-white flex items-center justify-center shadow-sm"
-                        >
-                          <Plus size={18} />
-                        </motion.button>
+        {(() => {
+          const sections = (cat?.subcategories ?? []).filter((sc) => sc.products.length > 0);
+          if (sections.length === 0) {
+            return <p className="text-center text-tg-hint py-16">{t.empty_category}</p>;
+          }
+          return sections.map((sc) => (
+            <div key={sc.id} className="mb-6 last:mb-0">
+              <h2 className="font-bold text-lg mb-3">{loc(sc, "name", lang)}</h2>
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate="show"
+                className="grid grid-cols-2 gap-3"
+              >
+                {sc.products.map((p) => (
+                  <motion.div key={p.id} variants={item} className="card flex flex-col">
+                    <div className="h-28 bg-brand-light flex items-center justify-center text-3xl">
+                      {p.image_url ? (
+                        <img src={p.image_url} alt="" className="h-full w-full object-cover" />
                       ) : (
-                        <motion.div
-                          key="step"
-                          initial={{ scale: 0.6, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ scale: 0.6, opacity: 0 }}
-                          className="flex items-center gap-1 shrink-0 rounded-full bg-brand-light"
-                        >
-                          <button
-                            onClick={() => dec(p)}
-                            className="h-8 w-8 rounded-full text-brand flex items-center justify-center active:scale-90 transition"
-                          >
-                            <Minus size={16} />
-                          </button>
-                          <span className="min-w-[1.25rem] text-center text-sm font-bold text-brand">
-                            {qtyOf(p)}
-                          </span>
-                          <button
-                            onClick={() => add(p)}
-                            className="h-8 w-8 rounded-full bg-brand text-white flex items-center justify-center active:scale-90 transition shadow-sm"
-                          >
-                            <Plus size={16} />
-                          </button>
-                        </motion.div>
+                        "🛒"
                       )}
-                    </AnimatePresence>
-                  </div>
-                </div>
+                    </div>
+                    <div className="p-3 flex flex-col flex-1">
+                      <h3 className="font-medium text-sm leading-tight line-clamp-2">
+                        {loc(p, "name", lang)}
+                      </h3>
+                      <div className="mt-auto pt-2 flex items-center justify-between gap-2">
+                        <span className="font-semibold text-sm">
+                          {money(p.price)} {t.sum}
+                          {p.unit ? <span className="text-tg-hint font-normal">/{unitLabel(p.unit, lang)}</span> : null}
+                        </span>
+                        <AnimatePresence mode="wait" initial={false}>
+                          {qtyOf(p) === 0 ? (
+                            <motion.button
+                              key="add"
+                              initial={{ scale: 0.6, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.6, opacity: 0 }}
+                              whileTap={{ scale: 0.85 }}
+                              onClick={() => add(p)}
+                              className="h-8 w-8 shrink-0 rounded-full bg-brand text-white flex items-center justify-center shadow-sm"
+                            >
+                              <Plus size={18} />
+                            </motion.button>
+                          ) : (
+                            <motion.div
+                              key="step"
+                              initial={{ scale: 0.6, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ scale: 0.6, opacity: 0 }}
+                              className="flex items-center gap-1 shrink-0 rounded-full bg-brand-light"
+                            >
+                              <button
+                                onClick={() => dec(p)}
+                                className="h-8 w-8 rounded-full text-brand flex items-center justify-center active:scale-90 transition"
+                              >
+                                <Minus size={16} />
+                              </button>
+                              <span className="min-w-[1.25rem] text-center text-sm font-bold text-brand">
+                                {qtyOf(p)}
+                              </span>
+                              <button
+                                onClick={() => add(p)}
+                                className="h-8 w-8 rounded-full bg-brand text-white flex items-center justify-center active:scale-90 transition shadow-sm"
+                              >
+                                <Plus size={16} />
+                              </button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </motion.div>
-            ))}
-          </motion.div>
-        )}
+            </div>
+          ));
+        })()}
       </div>
 
       <CartPill />
