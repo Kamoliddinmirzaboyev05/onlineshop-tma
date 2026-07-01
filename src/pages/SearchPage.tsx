@@ -30,7 +30,7 @@ export default function SearchPage() {
   }, []);
 
   const all: Product[] = useMemo(
-    () => (store?.categories ?? []).flatMap((c) => c.products),
+    () => (store?.categories ?? []).flatMap((c) => c.subcategories.flatMap((sc) => sc.products)),
     [store],
   );
 
