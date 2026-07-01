@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Category, Product, RestaurantDetail } from "../api/types";
+import CartPill from "../components/CartPill";
 import { MenuSkeleton } from "../components/Skeleton";
 import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
@@ -162,19 +163,7 @@ export default function CategoryPage() {
         )}
       </div>
 
-      {/* ── Floating cart bar ──────────────────────────────────── */}
-      {cart.count() > 0 && (
-        <motion.div
-          initial={{ y: 80, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="fixed bottom-20 inset-x-0 px-4 z-20"
-        >
-          <button onClick={() => nav("/cart")} className="btn-brand w-full flex justify-between shadow-lg">
-            <span>{t.cart} · {cart.count()}</span>
-            <span>{money(cart.total())} {t.sum}</span>
-          </button>
-        </motion.div>
-      )}
+      <CartPill />
     </div>
   );
 }

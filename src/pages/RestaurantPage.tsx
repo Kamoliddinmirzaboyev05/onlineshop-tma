@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Product, RestaurantDetail } from "../api/types";
+import CartPill from "../components/CartPill";
 import { MenuSkeleton } from "../components/Skeleton";
 import ErrorState from "../components/ErrorState";
 import { loc, useI18n } from "../i18n";
@@ -86,14 +87,7 @@ export default function RestaurantPage() {
         </section>
       ))}
 
-      {cart.count() > 0 && (
-        <div className="fixed bottom-20 inset-x-0 px-4">
-          <button onClick={() => nav("/cart")} className="btn-brand w-full flex justify-between">
-            <span>{t.cart} · {cart.count()}</span>
-            <span>{money(cart.total())} {t.sum}</span>
-          </button>
-        </div>
-      )}
+      <CartPill />
     </div>
   );
 }
