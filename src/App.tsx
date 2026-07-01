@@ -1,6 +1,8 @@
+import { AnimatePresence } from "framer-motion";
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import BottomNav from "./components/BottomNav";
+import Splash from "./components/Splash";
 import CartPage from "./pages/CartPage";
 import CategoryPage from "./pages/CategoryPage";
 import CheckoutPage from "./pages/CheckoutPage";
@@ -19,29 +21,26 @@ export default function App() {
     login();
   }, [login]);
 
-  if (!ready) {
-    return (
-      <div className="h-full flex items-center justify-center text-tg-hint">
-        Yuklanmoqda…
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-full pb-20">
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/category/:id" element={<CategoryPage />} />
-        <Route path="/search" element={<SearchPage />} />
-        <Route path="/restaurant/:id" element={<RestaurantPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/orders" element={<OrdersPage />} />
-        <Route path="/orders/:id" element={<OrderDetailPage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-      <BottomNav />
-    </div>
+    <>
+      <AnimatePresence>{!ready && <Splash />}</AnimatePresence>
+      {ready && (
+        <div className="min-h-full pb-20">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/category/:id" element={<CategoryPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/restaurant/:id" element={<RestaurantPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/:id" element={<OrderDetailPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <BottomNav />
+        </div>
+      )}
+    </>
   );
 }
