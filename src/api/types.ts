@@ -12,13 +12,22 @@ export interface Product {
   is_available: boolean;
 }
 
-export interface Category {
+export interface Subcategory {
   id: number;
   name_uz: string;
   name_ru: string;
   image_url?: string | null;
   sort_order: number;
   products: Product[];
+}
+
+export interface Category {
+  id: number;
+  name_uz: string;
+  name_ru: string;
+  image_url?: string | null;
+  sort_order: number;
+  subcategories: Subcategory[];
 }
 
 export interface Restaurant {
