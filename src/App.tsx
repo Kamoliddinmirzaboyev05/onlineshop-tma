@@ -10,7 +10,6 @@ import HomePage from "./pages/HomePage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import OrdersPage from "./pages/OrdersPage";
 import ProfilePage from "./pages/ProfilePage";
-import RestaurantPage from "./pages/RestaurantPage";
 import SearchPage from "./pages/SearchPage";
 import { useAuth } from "./store/auth";
 
@@ -30,7 +29,6 @@ export default function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/category/:id" element={<CategoryPage />} />
             <Route path="/search" element={<SearchPage />} />
-            <Route path="/restaurant/:id" element={<RestaurantPage />} />
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
             <Route path="/orders" element={<OrdersPage />} />
