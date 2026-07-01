@@ -60,6 +60,9 @@ export default function HomePage() {
   const cats = store?.categories ?? [];
   const title = store?.name && store.name !== "Do'kon" ? store.name : "AllFoods";
 
+  const productCount = (c: Category) =>
+    c.subcategories.reduce((sum, sc) => sum + sc.products.length, 0);
+
   const open = (c: Category) => {
     haptic("light");
     nav(`/category/${c.id}`);
@@ -132,9 +135,9 @@ export default function HomePage() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />
 
                   {/* mahsulot soni */}
-                  {c.products.length > 0 && (
+                  {productCount(c) > 0 && (
                     <span className="absolute top-3 left-3 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1">
-                      {c.products.length} {t.products_n}
+                      {productCount(c)} {t.products_n}
                     </span>
                   )}
 
