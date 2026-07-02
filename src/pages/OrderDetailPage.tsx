@@ -1,6 +1,6 @@
 import { Check, CheckCircle2, Clock, CreditCard, MapPin, MessageCircle, Phone, Printer, ShoppingBag, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { api } from "../api/client";
 import type { Order, RestaurantDetail } from "../api/types";
 import StatusBadge from "../components/StatusBadge";
@@ -21,6 +21,7 @@ function stageIndex(status: string): number {
 
 export default function OrderDetailPage() {
   const { id } = useParams();
+  const [searchParams] = useSearchParams();
   const nav = useNavigate();
   const { t, lang } = useI18n();
   const [order, setOrder] = useState<Order | null>(null);
@@ -64,6 +65,7 @@ export default function OrderDetailPage() {
   const curStage = stageIndex(order.status);
   const isDelivered = order.status === "delivered";
   const isCancelled = order.status === "cancelled";
+  const justPlaced = searchParams.get("placed") === "1";
   const payLabel = order.payment_method === "card" ? t.pay_card : t.pay_cash;
 
   return (
@@ -74,6 +76,26 @@ export default function OrderDetailPage() {
         <h1 className="text-xl font-bold">№ {order.number}</h1>
         <StatusBadge status={order.status} />
       </div>
+
+      {justPlaced && !isCancelled && (
+        <div className="mt-4 rounded-3xl bg-emerald-50 border border-emerald-100 px-4 py-4 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span className="shrink-0 h-11 w-11 rounded-2xl bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-200">
+              <CheckCircle2 size={25} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-lg font-black text-emerald-800">
+                {lang === "uz" ? "Buyurtma yuborildi" : "Заказ отправлен"}
+              </div>
+              <p className="text-sm text-emerald-700 mt-0.5 leading-snug">
+                {lang === "uz"
+                  ? `№ ${order.number} buyurtmangiz qabul qilindi. Kuryer tez orada qabul qiladi.`
+                  : `Заказ № ${order.number} принят. Курьер скоро примет заказ.`}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Xaridni davom ettirish — buyurtma berilgach darhol ko'rinadi */}
       <button

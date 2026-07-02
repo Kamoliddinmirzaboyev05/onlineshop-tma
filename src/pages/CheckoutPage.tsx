@@ -95,7 +95,7 @@ export default function CheckoutPage() {
       });
       haptic("medium");
       cart.clear();
-      nav(`/orders/${order.id}`, { replace: true });
+      nav(`/orders/${order.id}?placed=1`, { replace: true });
     } catch (e) {
       setError(errorText(e));
       setSubmitting(false);
