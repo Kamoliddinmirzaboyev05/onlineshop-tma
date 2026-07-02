@@ -11,7 +11,7 @@ import { money } from "../lib/format";
 const POLL_INTERVAL_MS = 15000;
 
 export default function OrdersPage() {
-  const { t, lang } = useI18n();
+  const { t } = useI18n();
   const nav = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,7 +34,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     load();
-    // Kuryer "yetkazdim" bossa, tasdiqlash so'rovi ro'yxatda jonli ko'rinishi uchun.
+    // Kuryer statusni o'zgartirsa, ro'yxat jonli yangilanib tursin.
     const iv = setInterval(() => load(true), POLL_INTERVAL_MS);
     return () => clearInterval(iv);
   }, []);
@@ -55,13 +55,11 @@ export default function OrdersPage() {
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">{t.orders}</h1>
       <div className="space-y-3">
-        {orders.map((o) => {
-          const needsConfirm = !!o.courier_delivered_at && o.status !== "delivered";
-          return (
+        {orders.map((o) => (
             <button
               key={o.id}
               onClick={() => nav(`/orders/${o.id}`)}
-              className={`card p-4 w-full text-left ${needsConfirm ? "ring-2 ring-emerald-400" : ""}`}
+              className="card p-4 w-full text-left"
             >
               <div className="flex items-center justify-between">
                 <span className="font-semibold">№ {o.number}</span>
@@ -95,14 +93,8 @@ export default function OrdersPage() {
                 </span>
               </div>
 
-              {needsConfirm && (
-                <p className="mt-2 text-sm font-semibold text-emerald-600">
-                  {lang === "uz" ? "🛵 Qabul qilishni tasdiqlang →" : "🛵 Подтвердите получение →"}
-                </p>
-              )}
             </button>
-          );
-        })}
+        ))}
       </div>
     </div>
   );
