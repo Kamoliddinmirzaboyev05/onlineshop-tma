@@ -1,4 +1,4 @@
-import { Check, CheckCircle2, Printer, XCircle } from "lucide-react";
+import { Check, CheckCircle2, Clock, CreditCard, MapPin, MessageCircle, Phone, Printer, ShoppingBag, XCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../api/client";
@@ -27,20 +27,6 @@ export default function OrderDetailPage() {
   const [store, setStore] = useState<RestaurantDetail | null>(null);
   const [error, setError] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [confirming, setConfirming] = useState(false);
-
-  const confirm = async () => {
-    if (!order) return;
-    setConfirming(true);
-    try {
-      const o = await api.confirmOrder(order.id);
-      setOrder(o);
-    } catch {
-      setError(true);
-    } finally {
-      setConfirming(false);
-    }
-  };
 
   useEffect(() => {
     api.store().then(setStore).catch(() => {});
@@ -88,6 +74,15 @@ export default function OrderDetailPage() {
         <h1 className="text-xl font-bold">№ {order.number}</h1>
         <StatusBadge status={order.status} />
       </div>
+
+      {/* Xaridni davom ettirish — buyurtma berilgach darhol ko'rinadi */}
+      <button
+        onClick={() => nav("/")}
+        className="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-tg-card text-brand font-semibold active:scale-[0.98] transition"
+      >
+        <ShoppingBag size={18} />
+        {t.back_to_menu}
+      </button>
 
       {/* 3-bosqichli progress */}
       {isCancelled ? (
@@ -186,32 +181,42 @@ export default function OrderDetailPage() {
         </div>
       )}
 
-      <div className="mt-4 text-sm text-tg-hint space-y-1">
-        <p>📍 {order.address_line}</p>
-        {order.phone && <p>📱 {order.phone}</p>}
-        <p>💳 {payLabel}</p>
-        {order.comment && <p>💬 {order.comment}</p>}
-        <p className="text-xs">{new Date(order.created_at).toLocaleString()}</p>
-      </div>
-
-      {/* Kuryer yetkazdi — mijoz tasdig'i so'raladi */}
-      {order.courier_delivered_at && !isDelivered && (
-        <div className="mt-5 rounded-2xl border-2 border-emerald-400 bg-emerald-50 p-4 text-center">
-          <p className="font-semibold text-emerald-800">
-            {lang === "uz" ? "Kuryer buyurtmangizni yetkazdi 🛵" : "Курьер доставил ваш заказ 🛵"}
-          </p>
-          <p className="text-sm text-emerald-700 mt-0.5 mb-3">
-            {lang === "uz" ? "Qabul qilganingizni tasdiqlang" : "Подтвердите получение"}
-          </p>
-          <button
-            onClick={confirm}
-            disabled={confirming}
-            className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold disabled:opacity-60"
-          >
-            {confirming ? "…" : lang === "uz" ? "✓ Qabul qildim" : "✓ Получил"}
-          </button>
+      <div className="mt-4 card p-4 space-y-3.5">
+        <div className="flex items-start gap-3">
+          <span className="shrink-0 h-8 w-8 rounded-full bg-brand-light/40 text-brand flex items-center justify-center">
+            <MapPin size={16} />
+          </span>
+          <span className="text-sm leading-tight pt-1.5">{order.address_line}</span>
         </div>
-      )}
+        {order.phone && (
+          <div className="flex items-center gap-3">
+            <span className="shrink-0 h-8 w-8 rounded-full bg-brand-light/40 text-brand flex items-center justify-center">
+              <Phone size={16} />
+            </span>
+            <span className="text-sm">{order.phone}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-3">
+          <span className="shrink-0 h-8 w-8 rounded-full bg-brand-light/40 text-brand flex items-center justify-center">
+            <CreditCard size={16} />
+          </span>
+          <span className="text-sm">{payLabel}</span>
+        </div>
+        {order.comment && (
+          <div className="flex items-start gap-3">
+            <span className="shrink-0 h-8 w-8 rounded-full bg-brand-light/40 text-brand flex items-center justify-center">
+              <MessageCircle size={16} />
+            </span>
+            <span className="text-sm leading-tight pt-1.5">{order.comment}</span>
+          </div>
+        )}
+        <div className="flex items-center gap-3">
+          <span className="shrink-0 h-8 w-8 rounded-full bg-brand-light/40 text-brand flex items-center justify-center">
+            <Clock size={16} />
+          </span>
+          <span className="text-sm text-tg-hint">{new Date(order.created_at).toLocaleString()}</span>
+        </div>
+      </div>
 
       {/* Chekni ko'rish */}
       <button
@@ -245,89 +250,105 @@ export default function OrderDetailPage() {
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
-            className="bg-white w-full max-w-sm rounded-t-3xl p-6 pb-8 shadow-2xl max-h-[90vh] overflow-y-auto"
+            className="bg-white w-full max-w-sm rounded-t-3xl p-5 pb-8 shadow-2xl max-h-[90vh] overflow-y-auto"
           >
-            {/* Header — do'kon ma'lumoti */}
-            <div className="text-center mb-4">
-              <div className="text-2xl font-black tracking-tight">{store?.name || "All Foods"}</div>
-              {store?.address && <div className="text-xs text-slate-400 mt-1">📍 {store.address}</div>}
-              {store?.phones?.[0] && <div className="text-xs text-slate-400">📱 {store.phones[0]}</div>}
-            </div>
+            <div className="mx-auto h-1 w-10 rounded-full bg-slate-200 mb-4" />
 
-            {/* Meta */}
-            <div className="border-t border-dashed border-slate-200 pt-3 text-xs text-slate-500 space-y-1">
-              <div className="flex justify-between">
-                <span>{t.order} №</span>
-                <span className="font-semibold text-slate-700">{order.number}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{lang === "uz" ? "Sana" : "Дата"}</span>
-                <span>{new Date(order.created_at).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>{lang === "uz" ? "Holat" : "Статус"}</span>
-                <span>{t.status[order.status]}</span>
-              </div>
-            </div>
-
-            {/* Mahsulotlar */}
-            <div className="border-t border-dashed border-slate-200 mt-3 pt-3 space-y-2.5">
-              {order.items.map((it) => (
-                <div key={it.id} className="flex items-start gap-2.5 text-sm">
-                  {it.image_url ? (
-                    <img src={it.image_url} alt="" className="h-10 w-10 rounded-lg object-cover bg-slate-100 shrink-0" />
-                  ) : (
-                    <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">🍽</div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="font-medium truncate">{loc(it, "name", lang)}</div>
-                    <div className="text-xs text-slate-400">
-                      {qtyUnit(it.quantity, it.unit, lang)} × {money(it.price)} {t.sum}
-                    </div>
-                    {it.note && <div className="text-[10px] text-amber-700 mt-0.5">💬 {it.note}</div>}
-                  </div>
-                  <div className="font-semibold text-right shrink-0">
-                    {money(it.price * it.quantity)} {t.sum}
-                  </div>
+            <div className="rounded-2xl border border-dashed border-slate-300 p-5">
+              {/* Header — do'kon ma'lumoti */}
+              <div className="text-center mb-4">
+                <div className="mx-auto mb-2 h-11 w-11 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <CheckCircle2 size={24} />
                 </div>
-              ))}
-            </div>
-
-            {/* Yig'indilar */}
-            <div className="border-t border-dashed border-slate-200 mt-4 pt-3 space-y-1.5">
-              <div className="flex justify-between text-sm text-slate-500">
-                <span>{t.items_label}</span>
-                <span>{money(order.items_total)} {t.sum}</span>
+                <div className="text-xl font-black tracking-tight text-slate-900">{store?.name || "All Foods"}</div>
+                {store?.address && <div className="text-xs text-slate-400 mt-1">📍 {store.address}</div>}
+                {store?.phones?.[0] && <div className="text-xs text-slate-400">📱 {store.phones[0]}</div>}
               </div>
-              <div className="flex justify-between text-sm text-slate-500">
-                <span>{t.delivery}</span>
-                <span>{order.delivery_fee === 0 ? t.free : `${money(order.delivery_fee)} ${t.sum}`}</span>
+
+              {/* Meta */}
+              <div className="border-t border-dashed border-slate-200 pt-3 text-xs text-slate-500 space-y-1.5">
+                <div className="flex justify-between">
+                  <span>{t.order} №</span>
+                  <span className="font-semibold text-slate-700">{order.number}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{lang === "uz" ? "Sana" : "Дата"}</span>
+                  <span>{new Date(order.created_at).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>{lang === "uz" ? "Holat" : "Статус"}</span>
+                  <span className="font-medium text-slate-700">{t.status[order.status]}</span>
+                </div>
               </div>
-              <div className="flex justify-between text-sm text-slate-500">
-                <span>{t.payment}</span>
-                <span>{payLabel}</span>
+
+              {/* Mahsulotlar */}
+              <div className="border-t border-dashed border-slate-200 mt-3 pt-3 space-y-3">
+                {order.items.map((it) => (
+                  <div key={it.id} className="flex items-start gap-2.5 text-sm">
+                    {it.image_url ? (
+                      <img src={it.image_url} alt="" className="h-10 w-10 rounded-lg object-cover bg-slate-100 shrink-0" />
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-slate-100 flex items-center justify-center shrink-0">🍽</div>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-slate-900 truncate">{loc(it, "name", lang)}</div>
+                      <div className="text-xs text-slate-400 tabular-nums">
+                        {qtyUnit(it.quantity, it.unit, lang)} × {money(it.price)} {t.sum}
+                      </div>
+                      {it.note && <div className="text-[10px] text-amber-700 mt-0.5">💬 {it.note}</div>}
+                    </div>
+                    <div className="font-semibold text-right text-slate-900 tabular-nums shrink-0">
+                      {money(it.price * it.quantity)} {t.sum}
+                    </div>
+                  </div>
+                ))}
               </div>
+
+              {/* Yig'indilar */}
+              <div className="border-t border-dashed border-slate-200 mt-4 pt-3 space-y-1.5">
+                <div className="flex justify-between text-sm text-slate-500 tabular-nums">
+                  <span>{t.items_label}</span>
+                  <span>{money(order.items_total)} {t.sum}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-500 tabular-nums">
+                  <span>{t.delivery}</span>
+                  <span>{order.delivery_fee === 0 ? t.free : `${money(order.delivery_fee)} ${t.sum}`}</span>
+                </div>
+                <div className="flex justify-between text-sm text-slate-500">
+                  <span>{t.payment}</span>
+                  <span>{payLabel}</span>
+                </div>
+              </div>
+
+              <div className="border-t-2 border-slate-900 mt-3 pt-3 flex justify-between items-baseline">
+                <span className="font-black text-base">{t.total}</span>
+                <span className="font-black text-xl tabular-nums">{money(order.total)} {t.sum}</span>
+              </div>
+
+              {/* Yetkazish manzili */}
+              <div className="mt-4 text-xs text-slate-400 space-y-0.5 border-t border-dashed border-slate-200 pt-3">
+                <div>📍 {order.address_line}</div>
+                {order.phone && <div>📱 {order.phone}</div>}
+              </div>
+
+              <div className="mt-4 text-xs text-center text-slate-400">{t.thank_you}</div>
             </div>
 
-            <div className="border-t-2 border-slate-900 mt-3 pt-3 flex justify-between">
-              <span className="font-black text-lg">{t.total}</span>
-              <span className="font-black text-lg">{money(order.total)} {t.sum}</span>
+            <div className="flex gap-3 mt-5">
+              <button
+                onClick={() => setShowReceipt(false)}
+                className="flex-1 py-3 rounded-xl bg-slate-100 text-slate-700 font-semibold text-sm"
+              >
+                {t.close}
+              </button>
+              <button
+                onClick={() => nav("/")}
+                className="flex-1 py-3 rounded-xl bg-brand text-white font-semibold text-sm flex items-center justify-center gap-1.5"
+              >
+                <ShoppingBag size={16} />
+                {t.back_to_menu}
+              </button>
             </div>
-
-            {/* Yetkazish manzili */}
-            <div className="mt-4 text-xs text-slate-400 space-y-0.5">
-              <div>📍 {order.address_line}</div>
-              {order.phone && <div>📱 {order.phone}</div>}
-            </div>
-
-            <div className="mt-3 text-xs text-center text-slate-400">{t.thank_you}</div>
-
-            <button
-              onClick={() => setShowReceipt(false)}
-              className="mt-5 w-full py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm"
-            >
-              {t.close}
-            </button>
           </div>
         </div>
       )}
